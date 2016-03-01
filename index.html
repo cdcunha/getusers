@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Simple Chat with nodejs</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<script src="/socket.io/socket.io.js"></script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+        <script type="text/javascript">
+			var socketio = io.connect('127.0.0.1:1337', {'forceNew':true });
+		
+			$(document).ready(function(){
+				socketio.on("update-users", function(dataUsers){
+					var list = '  <thead>' +
+							   '    <th>User</th>' +
+							   '    <th>Pass</th>' +
+							   '  </thead>' +
+							   '  <tbody>';
+					$("#Users").empty();
+					$.each(dataUsers, function(username, userpass) {
+						list = list + '<tr><td>' + username + '</td><td>' + userpass + '</td></tr>';
+					});
+					list = list + '</tbody>';
+					$('#Users').append(list);
+				});
+				
+				$("#connect").click(function(){
+					$.ajax({
+						type: 'POST',
+						cache: false,
+						url: 'http://127.0.0.1:3000',
+						data: { "Event":"loadUsers", "Server":$("#Server").val(), "Database":$("#Database").val(), "UserName":$("#UserName").val() , "Password":$("#Password").val() },
+						dataType: 'json',
+						success: function(data, status, xml){
+							alert(data);
+						},
+						error: function(xml, status, error){
+							alert('Error: ' + error);
+						},
+						complete: function(xml, status){
+							// do something after success or error no matter what
+						}
+					});
+				});
+			})
+		</script>
+	</head>
+    <body>
+		<div class="container-fluid">
+			<div class='row'>
+				<div class="col-md-3">
+					<label>Server name or IP</label><br/>
+					<input type="text" id="Server">
+				</div>
+				<div class="col-md-3">
+					<label>Database</label><br/>
+					<input type="text" id="Database">
+				</div>
+				<div class="col-md-3">
+					<label>User name</label><br/>
+					<input type="text" id="UserName">
+				</div>
+				<div class="col-md-2">
+					<label>Password</label><br/>
+					<input type="text" id="Password">
+				</div>
+				<div class="col-md-1">
+					<input type="button" name="connect" id="connect" value="Connect" class="btn btn-primary">
+				</div>
+			</div>
+			<br/>
+			<div class='row'>
+				<div class="jumbotron">
+					<table id='Users'>
+					</table>
+				</div>
+			</div>
+		</div>
+	</body>
+</html>

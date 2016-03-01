@@ -1,0 +1,11 @@
+{
+  "name": "mssql",
+  "version": "1.0.0",
+  "description": "App to connect to ColWeb data base",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Charlestown Dias da Cunha",
+  "license": "ISC"
+}
