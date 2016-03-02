@@ -1,80 +1,90 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Simple Chat with nodejs</title>
+        <title>Get Users in COLWEB</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<script src="/socket.io/socket.io.js"></script>
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
 		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
 		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+		<style>
+			table {
+				table-layout:fixed;
+			}
+
+			.div-table-content {
+			  height:350px;
+			  overflow-y:auto;
+			}
+		</style>
         <script type="text/javascript">
-			var socketio = io.connect('127.0.0.1:1337', {'forceNew':true });
+			var socketio = io.connect('192.168.0.175:3000', {'forceNew':true });
 		
 			$(document).ready(function(){
-				socketio.on("update-users", function(dataUsers){
-					var list = '  <thead>' +
-							   '    <th>User</th>' +
-							   '    <th>Pass</th>' +
-							   '  </thead>' +
-							   '  <tbody>';
+				socketio.on("load-list-users", function(infodb, dataUsers, rowCount){
+					$(".InfoDB").attr("disabled", false);
+					$("#connectedDB").html('Found ' + rowCount + ' users in ' + infodb.Database + ' at ' + infodb.Server);
+					var list = '  <tbody>';
 					$("#Users").empty();
-					$.each(dataUsers, function(username, userpass) {
-						list = list + '<tr><td>' + username + '</td><td>' + userpass + '</td></tr>';
+					$.each(dataUsers, function(id, item) {
+						list = list + '<tr><td>' + item.user + '</td><td>' + item.pass + '</td></tr>';
 					});
 					list = list + '</tbody>';
 					$('#Users').append(list);
 				});
 				
+				socketio.on('connect', function() {
+					console.log('Connected');
+				});
+				
 				$("#connect").click(function(){
-					$.ajax({
-						type: 'POST',
-						cache: false,
-						url: 'http://127.0.0.1:3000',
-						data: { "Event":"loadUsers", "Server":$("#Server").val(), "Database":$("#Database").val(), "UserName":$("#UserName").val() , "Password":$("#Password").val() },
-						dataType: 'json',
-						success: function(data, status, xml){
-							alert(data);
-						},
-						error: function(xml, status, error){
-							alert('Error: ' + error);
-						},
-						complete: function(xml, status){
-							// do something after success or error no matter what
-						}
-					});
+					$(".InfoDB").attr("disabled", true);
+					var infoDB = { "Server":$("#Server").val(), "Database":$("#Database").val(), "UserName":$("#UserName").val() , "Password":$("#Password").val() };
+					socketio.emit("connectDB", infoDB);
 				});
 			})
 		</script>
 	</head>
     <body>
-		<div class="container-fluid">
+		<div class="container">
 			<div class='row'>
+				<br/>
 				<div class="col-md-3">
 					<label>Server name or IP</label><br/>
-					<input type="text" id="Server">
+					<input type="text" id="Server" class="InfoDB" value="54.207.53.33">
 				</div>
 				<div class="col-md-3">
 					<label>Database</label><br/>
-					<input type="text" id="Database">
+					<input type="text" id="Database" class="InfoDB" value="COL_HUMBER">
 				</div>
 				<div class="col-md-3">
 					<label>User name</label><br/>
-					<input type="text" id="UserName">
+					<input type="text" id="UserName" class="InfoDB" value="sqluser">
 				</div>
 				<div class="col-md-2">
 					<label>Password</label><br/>
-					<input type="text" id="Password">
+					<input type="text" id="Password" class="InfoDB" value="6dXsA4D680">
 				</div>
 				<div class="col-md-1">
-					<input type="button" name="connect" id="connect" value="Connect" class="btn btn-primary">
+					<input type="button" name="connect" id="connect" value="Connect" class="btn btn-primary InfoDB">
 				</div>
 			</div>
 			<br/>
+			<h3 id="connectedDB"></h3>
 			<div class='row'>
 				<div class="jumbotron">
-					<table id='Users'>
+				    <table class="table">
+						<thead>
+							<tr>
+								<th>User</th>
+								<th>Pass</th>
+							</tr>
+						</thead>
 					</table>
+				    <div class="div-table-content" style="height=300px">
+						<table id='Users' class="table table-bordered table-striped table-hover" style="height:300px"></table>
+					</div>
 				</div>
 			</div>
 		</div>

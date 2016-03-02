@@ -6,6 +6,10 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "dependencies": {
+    "tedious": "~1.13.2",
+	"socket.io": "~1.4.5"
+  },
   "author": "Charlestown Dias da Cunha",
   "license": "ISC"
 }
