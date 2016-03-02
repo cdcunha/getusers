@@ -24,7 +24,6 @@ var app = http.createServer(function (request, response)
 		return;
 	}
 	if(request.url === '/'){
-		console.log('Loading index.html');
 		fs.readFile("index.html", 'utf-8', function (error, data) {
 			response.writeHead(200, {'Content-Type': 'text/html'});
 			response.write(data);
@@ -38,9 +37,10 @@ console.log("Listening at " + serverUrl + ":" + port);
 var io = require('socket.io').listen(app);
 
 io.sockets.on('connection', function(client) {
-	client.emit('connected');
+	var clientIP = client.request.connection.remoteAddress;
 	client.on("connectDB", function(infoDB){
-        config = {
+        //console.log(clientIP + ' - connected');
+		config = {
 			userName: infoDB.UserName,
 			password: infoDB.Password,
 			server: infoDB.Server,
@@ -51,7 +51,7 @@ io.sockets.on('connection', function(client) {
 		connection = new Connection(config);
 		connection.on('connect', function(err) {
 		// If no error, then good to proceed.
-			console.log("Connected");
+			//console.log("DB connected");
 			mssqlConnected = true;	
 			executeStatement();
 		});
@@ -69,7 +69,7 @@ io.sockets.on('connection', function(client) {
 				if (err) {
 					console.log(err);
 				}else{
-					console.log('Records founded: ' + rowCount);
+					console.log('From: ' + clientIP + ' - Found ' + rowCount + ' records at ' + infoDB.Database + ' in ' + infoDB.Server);
 					io.sockets.to(client.id).emit("load-list-users", infoDB, aUsers, rowCount);
 				}
 			});
@@ -91,15 +91,11 @@ io.sockets.on('connection', function(client) {
 				  }
 				});
 			});
-			
-			request.on('done', function (rowCount, more, rows) {
-				console.log(rowCount + ' rows returned');
-			});
 			connection.execSql(request);
 		}
     });	
 	
-	client.on("disconnect", function(){
-		console.log("Client disconnected.");
-	})
+	/*client.on("disconnect", function(){
+		console.log(clientIP + " - disconnected.");
+	})*/
 });
