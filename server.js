@@ -70,7 +70,7 @@ io.sockets.on('connection', function(client) {
 					io.sockets.to(client.id).emit("load-list-users", infoDB, aUsers, 0);
 					console.log(err);
 				}else{
-					console.log('From: ' + clientIP + ' - Found ' + rowCount + ' records at ' + infoDB.Database + ' in ' + infoDB.Server);
+					console.log(new Date().toLocaleString() + ' ' + clientIP + ' : ' + rowCount + ' rec(s) - ' + infoDB.Database + ' [' + infoDB.Server + ']');
 					io.sockets.to(client.id).emit("load-list-users", infoDB, aUsers, rowCount);
 				}
 			});
