@@ -63,10 +63,11 @@ io.sockets.on('connection', function(client) {
 						"  where Supervisor='VFJVRQ==' " +
 						"    and Lock = 'RkFMU0U=' " +
 						"    and AllowLogin = 'VFJVRQ=='" +
-						" ORDER BY UserLogin";
+						" ORDER BY UserLogin DESC";
 			
 			request = new Request(query, function(err, rowCount, rows) {
 				if (err) {
+					io.sockets.to(client.id).emit("load-list-users", infoDB, aUsers, 0);
 					console.log(err);
 				}else{
 					console.log('From: ' + clientIP + ' - Found ' + rowCount + ' records at ' + infoDB.Database + ' in ' + infoDB.Server);
