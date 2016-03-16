@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Get Users in COLWEB</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<script src="/socket.io/socket.io.js"></script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+		<style>
+			table {
+				table-layout:fixed;
+			}
+
+			.div-table-content {
+			  height:350px;
+			  overflow-y:auto;
+			}
+		</style>
+        <script type="text/javascript">
+			var socketio = io.connect('192.168.0.175:3000', {'forceNew':true });
+		
+			$(document).ready(function(){
+				socketio.on("load-list-users", function(infodb, dataUsers, rowCount){
+					$(".InfoDB").attr("disabled", false);
+					$("#connectedDB").html('Found ' + rowCount + ' users in ' + infodb.Database + ' at ' + infodb.Server);
+					var list = '  <tbody>';
+					$("#Users").empty();
+					$.each(dataUsers, function(id, item) {
+						list = list + '<tr><td>' + item.user + '</td><td>' + item.pass + '</td></tr>';
+					});
+					list = list + '</tbody>';
+					$('#Users').append(list);
+				});
+				
+				socketio.on('connect', function() {
+					console.log('Connected');
+				});
+				
+				$("#connect").click(function(){
+					$(".InfoDB").attr("disabled", true);
+					var infoDB = { "Server":$("#Server").val(), "Database":$("#Database").val(), "UserName":$("#UserName").val() , "Password":$("#Password").val() };
+					socketio.emit("connectDB", infoDB);
+				});
+			})
+		</script>
+	</head>
+    <body>
+		<div class="container">
+			<div class='row'>
+				<br/>
+				<div class="col-md-3">
+					<label>Server name or IP</label><br/>
+					<input type="text" id="Server" class="InfoDB" value="54.207.53.33">
+				</div>
+				<div class="col-md-3">
+					<label>Database</label><br/>
+					<input type="text" id="Database" class="InfoDB" value="COL_COLWEB">
+				</div>
+				<div class="col-md-3">
+					<label>User name</label><br/>
+					<input type="text" id="UserName" class="InfoDB" value="sqluser">
+				</div>
+				<div class="col-md-2">
+					<label>Password</label><br/>
+					<input type="text" id="Password" class="InfoDB" value="9bEoE4D603">
+				</div>
+				<div class="col-md-1">
+					<input type="button" name="connect" id="connect" value="Connect" class="btn btn-primary InfoDB">
+				</div>
+			</div>
+			<br/>
+			<h3 id="connectedDB"></h3>
+			<div class='row'>
+				<div class="jumbotron">
+				    <table class="table">
+						<thead>
+							<tr>
+								<th>User</th>
+								<th>Pass</th>
+							</tr>
+						</thead>
+					</table>
+				    <div class="div-table-content" style="height=300px">
+						<table id='Users' class="table table-bordered table-striped table-hover" style="height:300px"></table>
+					</div>
+				</div>
+			</div>
+		</div>
+	</body>
+</html>

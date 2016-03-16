@@ -1,0 +1,180 @@
+#!/usr/bin/env node
+
+/**
+ * Module dependencies.
+ */
+
+var app = require('../app');
+var debug = require('debug')('mrusers:server');
+var http = require('http');
+
+/**
+ * Get port from environment and store in Express.
+ */
+
+var port = normalizePort(process.env.OPENSHIFT_NODEJS_PORT || '3000');
+var serverUrl = process.env.OPENSHIFT_NODEJS_IP || "192.168.0.175";
+
+app.set('port', port);
+app.set('ipaddr', serverUrl);
+
+/**
+ * Create HTTP server.
+ */
+
+var server = http.createServer(app);
+
+/**
+ * Listen on provided port, on all network interfaces.
+ */
+
+server.listen(port, serverUrl, function () {
+    console.log("Listening at " + serverUrl + ":" + port);
+});
+server.on('error', onError);
+server.on('listening', onListening);
+
+/**
+ * Normalize a port into a number, string, or false.
+ */
+
+function normalizePort(val) {
+  var port = parseInt(val, 10);
+
+  if (isNaN(port)) {
+    // named pipe
+    return val;
+  }
+
+  if (port >= 0) {
+    // port number
+    return port;
+  }
+
+  return false;
+}
+
+/**
+ * Event listener for HTTP server "error" event.
+ */
+
+function onError(error) {
+  if (error.syscall !== 'listen') {
+    throw error;
+  }
+
+  var bind = typeof port === 'string'
+    ? 'Pipe ' + port
+    : 'Port ' + port;
+
+  // handle specific listen errors with friendly messages
+  switch (error.code) {
+    case 'EACCES':
+      console.error(bind + ' requires elevated privileges');
+      process.exit(1);
+      break;
+    case 'EADDRINUSE':
+      console.error(bind + ' is already in use');
+      process.exit(1);
+      break;
+    default:
+      throw error;
+  }
+}
+
+/**
+ * Event listener for HTTP server "listening" event.
+ */
+
+function onListening() {
+  var addr = server.address();
+  var bind = typeof addr === 'string'
+    ? 'pipe ' + addr
+    : 'port ' + addr.port;
+  debug('Listening on ' + bind);
+}
+
+///////////////////////////////////////////////////////
+///////////////////////////////////////////////////////
+var mssqlConnected = false;
+
+var Connection = require('tedious').Connection;
+var config = {
+    userName: 'sqluser',
+    password: 'sqluser',
+    server: 'serverss003',
+    // If you are on Microsoft Azure, you need this:
+    options: {encrypt: true, database: 'COL_COLWEB_DES'}
+};
+
+var Request = require('tedious').Request;
+var TYPES = require('tedious').TYPES;
+
+var io = require('socket.io').listen(server);
+
+io.sockets.on('connection', function(client) {
+	var clientIP = client.request.connection.remoteAddress;
+	client.on("connectDB", function(infoDB){
+        //console.log(clientIP + ' - connected');
+		config = {
+			userName: infoDB.UserName,
+			password: infoDB.Password,
+			server: infoDB.Server,
+			// If you are on Microsoft Azure, you need this:
+			options: {encrypt: true, database: infoDB.Database}
+		};
+		
+		connection = new Connection(config);
+		connection.on('connect', function(err) {
+		// If no error, then good to proceed.
+			//console.log("DB connected");
+			mssqlConnected = true;	
+			executeStatement();
+		});
+		
+		function executeStatement() {
+			var aUsers = [];
+			var query = "SELECT UserLogin, Password " +
+						"  FROM mrusers " +
+						"  where Supervisor='VFJVRQ==' " +
+						"    and Lock = 'RkFMU0U=' " +
+						"    and AllowLogin = 'VFJVRQ=='" +
+						" ORDER BY UserLogin DESC";
+			
+			request = new Request(query, function(err, rowCount, rows) {
+				if (err) {
+					io.sockets.to(client.id).emit("load-list-users", infoDB, aUsers, 0);
+					console.log(err);
+				}else{
+					console.log(new Date().toLocaleString() + ' ' + clientIP + ' : ' + rowCount + ' rec(s) - ' + infoDB.Database + ' [' + infoDB.Server + ']');
+					io.sockets.to(client.id).emit("load-list-users", infoDB, aUsers, rowCount);
+				}
+			});
+			
+			var item = { };
+			request.on('row', function(columns) {
+				columns.forEach(function(column) {
+				  if (column.value === null) {
+					console.log('NULL');
+				  } else {
+					//result+= column.value + " ";
+					if (column.metadata.colName == 'UserLogin'){
+						item = {};
+						item ["user"] = new Buffer(column.value, 'base64').toString('ascii');
+					}else{
+						item ["pass"] = new Buffer(column.value, 'base64').toString('ascii');
+						aUsers.push(item);
+					}
+				  }
+				});
+			});
+			connection.execSql(request);
+		}
+    });	
+	
+	/*client.on("disconnect", function(){
+		console.log(clientIP + " - disconnected.");
+	})*/
+});
+///////////////////////////////////////////////////////
+///////////////////////////////////////////////////////
