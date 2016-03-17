@@ -126,10 +126,16 @@ io.sockets.on('connection', function(client) {
 		
 		connection = new Connection(config);
 		connection.on('connect', function(err) {
-		// If no error, then good to proceed.
-			//console.log("DB connected");
-			mssqlConnected = true;	
-			executeStatement();
+			if (!err)
+			{
+				mssqlConnected = true;	
+				executeStatement();
+			}
+			else
+			{
+				io.sockets.to(client.id).emit("show-error", err.message);
+				console.log(err.message);
+			}
 		});
 		
 		function executeStatement() {
@@ -143,8 +149,9 @@ io.sockets.on('connection', function(client) {
 			
 			request = new Request(query, function(err, rowCount, rows) {
 				if (err) {
+					io.sockets.to(client.id).emit("show-error", err.message);
 					io.sockets.to(client.id).emit("load-list-users", infoDB, aUsers, 0);
-					console.log(err);
+					console.log(err.message);
 				}else{
 					console.log(new Date().toLocaleString() + ' ' + clientIP + ' : ' + rowCount + ' rec(s) - ' + infoDB.Database + ' [' + infoDB.Server + ']');
 					io.sockets.to(client.id).emit("load-list-users", infoDB, aUsers, rowCount);

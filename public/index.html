@@ -34,6 +34,11 @@
 					$('#Users').append(list);
 				});
 				
+				socketio.on('show-error', function(message) {
+					$(".InfoDB").attr("disabled", false);
+					alert(message);
+				});
+				
 				socketio.on('connect', function() {
 					console.log('Connected');
 				});
@@ -64,7 +69,7 @@
 				</div>
 				<div class="col-md-2">
 					<label>Password</label><br/>
-					<input type="text" id="Password" class="InfoDB" value="9bEoE4D603">
+					<input type="text" id="Password" class="InfoDB" value="7kBpQ50954">
 				</div>
 				<div class="col-md-1">
 					<input type="button" name="connect" id="connect" value="Connect" class="btn btn-primary InfoDB">

@@ -34,6 +34,11 @@
 					$('#Users').append(list);
 				});
 				
+				socketio.on('show-error', function(message) {
+					$(".InfoDB").attr("disabled", false);
+					alert(message);
+				});
+				
 				socketio.on('connect', function() {
 					console.log('Connected');
 				});
